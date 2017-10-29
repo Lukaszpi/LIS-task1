@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+
+<launch>
+
+    <node pkg="tethered_drone" name="estimator" type="image_processing_node" launch-prefix="xterm -e gdb --args"  output="screen" >
+
+
+ 
+    </node>
+
+</launch>

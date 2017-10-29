@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<launch>
+
+<!--   <arg name="data_root" value="/home/millanea/trunk/manifold_mapping_analysis/data/kitti/drive_18" />
+ -->  <arg name="data_root" value="/home/millanea/trunk/deepinsight" />
+
+
+  <node pkg="mesh_recolor" name="mesh_recolor_node" type="mesh_recolor_node" output="screen" >
+
+<!--     <param name="input_mesh_file_path" value="$(arg data_root)/voxblox/mesh_with_ba_combined.ply" />
+    <param name="output_mesh_file_path" value="$(arg data_root)/voxblox/mesh_with_ba_combined_recolor.ply" />
+ -->    
+<!--     <param name="input_mesh_file_path" value="$(arg data_root)/voxblox/mesh_no_ba_combined.ply" />
+    <param name="output_mesh_file_path" value="$(arg data_root)/voxblox/mesh_no_ba_combined_recolor.ply" />
+ -->
+    <param name="input_mesh_file_path" value="$(arg data_root)/mesh.ply" />
+    <param name="output_mesh_file_path" value="$(arg data_root)/mesh_recolor.ply" />
+
+    <param name="color/r" value="255" />
+    <param name="color/g" value="228" />
+    <param name="color/b" value="196" />
+
+  </node>
+
+</launch>
+

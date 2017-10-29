@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!-- Startup ROVIO, MSF, NMPC, gripper node, and chameleon for Schweizer Jugend Forscht Demo. -->
+
+<launch>
+
+<!-- ===== Parameters =================================================== -->
+  <arg name="mav_name" default="ibis" />
+  <arg name="namespace" default="$(arg mav_name)" />
+ <!-- <arg name="global_frame_name" default='odom'/>  -->
+  <arg name="local_frame_name" default='led_patter_2'/>
+  <arg name="planning_frame_name" default='odom'/>
+
+  <!-- FOR SIMULATION  -->
+  <!-- <param name="/use_sim_time" value="true"/>   -->
+
+
+<group ns="$(arg namespace)">
+
+<!-- ===== Core ======================================================= -->
+  <include file="$(find tethered_drone)/launch/mav_core.launch">
+      <arg name="mav_name" value='$(arg mav_name)'/>  
+    <!--  <arg name="global_frame_name" value='$(arg global_frame_name)'/> -->
+      <arg name="local_frame_name" value='$(arg local_frame_name)'/>
+      <arg name="planning_frame_name" value='$(arg planning_frame_name)'/>
+  </include>  
+
+  <!-- Pattern Specific stuff -->
+    <node name="image_processer" pkg="tethered_drone" type="image_processing_node" output="screen">
+      <rosparam file="$(find tethered_drone)/cfg/calibration_params_IMU_CHAMELEON.yaml"/>
+      <param name="required_points" value="6" />
+      <param name="estimator_status" value="false"/>
+      <param name="use_mask" value="false"/>
+      <param name="local_frame_name" value="led_patter_raw"/>
+      <param name="global_frame_name" value="odom"/>
+      <param name="tf_publish_time" value="0.01"/> 
+      <param name="tracking_mode" value="true"/>
+  </node>
+
+  <node name="transform_estimator" pkg="tethered_drone" type="attitude_estimator_node" output="screen"> 
+      <param name="local_frame_name" value="led_patter_filtered"/>
+      <param name="global_frame_name" value="odom"/>
+      <param name="tf_publish_time" value="0.01"/> 
+      <param name="estimator_kp" value="0.6"/> 
+      <param name="estimator_kv" value="8"/> 
+      
+  </node>
+    
+  <node pkg="tf" type="static_transform_publisher" name="ptgrey_position_broadcaster" args="-8.758753e-02 3.294356e-02 -1.243760e-01  -7.089213e-01 7.052819e-01 2.686950e-03 9.074078e-04 state cam_down 100" /> 
+
+  </group>
+</launch>

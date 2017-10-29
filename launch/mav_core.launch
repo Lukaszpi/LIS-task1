@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <!-- ===== Parameters =================================================== -->
+  <arg name="mav_name"/>
+<!--   <arg name="global_frame_name" default='enu'/>
+ -->  
+  <arg name="local_frame_name" default='odom'/>
+  <arg name="planning_frame_name" default='odom'/>
+
+  <!-- ===== Low Level Interface ======================================== -->
+  <node name="trinity_ros_node" pkg="trinity_ros" type="trinity_ros_node"
+    output="screen" respawn="true" clear_params="true">
+    <param name="frame_id" value="fcu" />
+    <param name="serial_port" value="/dev/fcu"/>
+    <param name="thrust_constant" value="0.82"/>
+    <param name="device_time/filter_algo" value="2"/> <!-- Use "Kalman Filter" algorithm for time translation. -->
+
+    <param name="capability_group" value="Core"/>
+  </node>
+
+  <!-- ===== ViSensor =================================================== -->
+  <rosparam file="$(find mav_startup)/parameters/mavs/$(arg mav_name)/visensor_p22031.yaml"/>
+  <node name="visensor_node" pkg="visensor_node" type="visensor_node" output="screen">
+    <param name="capability_group" value="Core"/>
+  </node>
+
+  <!-- ===== NonlinearMPC =============================================== -->
+  <node name="mav_nonlinear_mpc" pkg="mav_nonlinear_mpc" type="nonlinear_mpc_node"
+    respawn="true" clear_params="true" output="screen">
+    <remap from="odometry" to="msf_core/odometry"/>
+    <rosparam file="$(find mav_startup)/parameters/mavs/$(arg mav_name)/nonlinear_mpc.yaml"/>
+    <rosparam file="$(find mav_startup)/parameters/mavs/$(arg mav_name)/disturbance_observer.yaml"/>
+    <param name="verbose" value="true" />
+
+    <param name="capability_group" value="Core" />
+  </node>
+
+  <!-- ===== Rovio ====================================================== -->
+  <node name="rovio" pkg="rovio" type="rovio_node" output="screen">
+    <param name="filter_config" value="$(find mav_startup)/parameters/mavs/$(arg mav_name)/rovio_filter_p22031.info" />
+    <param name="camera0_config" value="$(find mav_startup)/parameters/mavs/$(arg mav_name)/rovio_equidist_cam0_p22031.yaml" />
+    <param name="camera1_config" value="$(find mav_startup)/parameters/mavs/$(arg mav_name)/rovio_equidist_cam1_p22031.yaml" />
+    <param name="world_frame" value="$(arg local_frame_name)" />
+
+    <!-- Not sure if we need this -->
+<!--     <param name="map_frame" value="$(arg global_frame_name)" />
+ -->
+
+    <param name="record_transform" value="false" />
+
+    <!-- No GPS -->
+    <remap from="pose" to="non_existing_topic_for_now_1" />
+    <!-- prevent odometry topic from low level interface to be plugged in rovio -->
+    <remap from="odometry" to="non_existing_topic_for_now_2"/>
+
+    <param name="capability_group" value="Rovio" />
+  </node>
+
+  <!-- Make imu and imu0 frames be the same, so stereo reconstruction works well -->
+  <node pkg="tf" type="static_transform_publisher" name="imu_imu0_broadcaster" args="0 0 0 0 0 0 imu imu0 10">
+    <param name="capability_group" value="Core" />
+  </node>
+
+  <!-- ===== MSF ======================================================== -->
+  <node name="pose_sensor_rovio" pkg="msf_updates" type="pose_sensor"
+    clear_params="true" output="screen">
+    <remap from="msf_core/hl_state_input" to="fcu/ekf_state_out" />
+    <remap from="msf_core/correction" to="fcu/ekf_state_in" />
+    <remap from="msf_core/imu_state_input" to="imu" />
+    <remap from="msf_updates/transform_input" to="rovio/transform" />
+    <rosparam file="$(find mav_startup)/parameters/mavs/$(arg mav_name)/msf_parameters_vision_p22031.yaml" />
+    <param name="core/msf_output_frame" value="$(arg local_frame_name)" />
+
+    <param name="capability_group" value="Rovio" />
+  </node>
+
+  <!-- ===== TF To Transform ============================================ -->
+  <node name="tf_to_transform" pkg="erl_utils" type="tf_to_transform_node"
+        output="screen" clear_params="true">
+    <param name="frame_id" value="$(arg planning_frame_name)"/>
+    <param name="child_frame_id" value="$(arg local_frame_name)"/>
+    <param name="publishing_frequency" value="1.0"/>
+
+    <remap from="T_parent_child" to="T_G_L"/> <!-- to local planner -->
+
+    <param name="capability_group" value="Core" />
+  </node>
+
+  <!-- ===== Local Planner ============================================== -->
+  <node name="local_planner" pkg="mav_local_planner" type="local_planner_node"
+        output="screen" clear_params="true">
+    <rosparam command="load" file="$(find erl_startup)/cfg/local_planner_params.yaml"/>
+    <param name="global_frame_id" value="$(arg planning_frame_name)"/>
+    <param name="local_frame_id" value="$(arg local_frame_name)"/>
+    <!-- possibile options: 'from_plan' or 'velocity_vector' -->
+    <param name="trajectory_sampler/yaw_policy" value="from_plan"/>
+
+    <remap from="odometry" to="msf_core/odometry"/>
+
+    <param name="capability_group" value="Planning" />
+  </node>
+
+  <!-- ===== Grid Planner =============================================== -->
+  <node name="grid_planner" pkg="grid_planner" type="grid_planner_node"
+        output="screen" clear_params="true">
+    <param name="frame_id" value="$(arg planning_frame_name)"/>
+    <param name="stop_at_waypoints" value="true"/> <!-- TODO check me! -->
+
+    <remap from="grid_waypoints" to="waypoint_flyer_node/trajectory_points"/>
+
+    <param name="capability_group" value="Planning" />
+  </node>
+
+  <!-- ===== Waypoint Planning ============================================= -->
+  <node name="waypoint_flyer_node" type="waypoint_flyer_node" pkg="tethered_drone" output="screen">
+    <param name="latch_topic" value="false" />
+    <param name="frame_id" value="$(arg planning_frame_name)" />
+    <param name="publish_plan_points_on_planning_complete" value="false" />
+    <param name="publish_visualization_on_planning_complete" value="false" />
+
+    <rosparam file="$(find tethered_drone)/cfg/waypoints.yaml"/>
+
+    <param name="capability_group" value="Planning" />
+  </node>
+
+  <!-- ===== Downward Camera ============================================= -->
+  <include file="$(find mav_startup)/launch/sensors/chameleon3/chameleon3.launch">
+    <arg name="camera_settings_file" value="$(find tethered_drone)/cfg/camera_settings.yaml" />
+  </include>
+
+</launch>

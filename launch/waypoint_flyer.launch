@@ -1,0 +1,9 @@
+<launch>
+
+  <node name="waypoint_flyer_node" type="waypoint_flyer_node" pkg="tethered_drone" output="screen">
+    <param name="latch_topic" value="true" />
+    <param name="frame_id" value="world" />
+    <rosparam file="$(find tethered_drone)/cfg/waypoints.yaml"/>
+  </node>
+
+</launch>

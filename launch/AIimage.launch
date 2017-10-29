@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<arg name="noise" default="false"/>
+	<arg name="outlier" default="false"/>
+
+	<arg name="rx" default="0"/>
+	<arg name="ry" default="0"/>
+	<arg name="rz" default="0"/>
+	<arg name="tx" default="0"/>
+	<arg name="ty" default="0"/>
+	<arg name="tz" default="10"/>
+
+
+    <node pkg="tethered_drone" name="artificial_picture" type="localization_testing_node" output="screen" >
+
+   		 <param name="noise" type="bool" value="$(arg noise)" />
+  		 <param name="outlier" type="bool" value="$(arg outlier)" />
+ 
+   		 <param name="rx" value="$(arg rx)" />
+  		 <param name="ry" value="$(arg ry)" />
+  		 <param name="rz" value="$(arg rz)" />
+  		 <param name="tx" value="$(arg tx)" />   
+  		 <param name="ty" value="$(arg ty)" />
+  		 <param name="tz" value="$(arg tz)" />
+
+    </node>
+
+</launch>

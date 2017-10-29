@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <!-- ===== Parameters =================================================== -->
+  
+  <!-- ===== Parameters =================================================== -->
+  <arg name="mav_name" default="ibis" />
+  <arg name="namespace" default="$(arg mav_name)" />
+  <!--   <arg name="global_frame_name" default='enu'/>
+ -->  
+  <arg name="local_frame_name" default='odom'/>
+  <arg name="planning_frame_name" default='odom'/>
+  <arg name="bag_file" default='/home/lukaszpietrasik/bags/flight_test1.bag'/>
+
+
+  <!-- FOR SIMULATION  -->
+  <param name="/use_sim_time" value="true"/> 
+
+  <!-- FOR SIMULATION  -->
+  <param name="/use_sim_time" value="true"/> 
+
+  <node name="estimator" pkg="tethered_drone" type="attitude_estimator_node" output="screen">  </node>
+  <node name="player" pkg="rosbag" type="play" output="screen" args=" --clock $(arg bag_file)"> </node>
+
+
+</launch>

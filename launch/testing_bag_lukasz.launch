@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <!-- ===== Parameters =================================================== -->
+  <arg name="mav_name" default="ibis" />
+  <arg name="namespace" default="$(arg mav_name)" />
+<!--   <arg name="global_frame_name" default='enu'/>
+ -->  
+  <arg name="local_frame_name" default='odom'/>
+  <arg name="planning_frame_name" default='odom'/>
+  <arg name="bag_file" default='/home/Documents/drone_ros/bags/flight_test.bag'/>
+
+
+  <!-- FOR SIMULATION  -->
+  <param name="/use_sim_time" value="true"/> 
+
+  <group ns="$(arg namespace)">
+
+    <!-- Pattern Specific stuff -->
+    <node name="image_processer" pkg="tethered_drone" type="image_processing_node" output="screen">
+      <rosparam file="$(find tethered_drone)/parameters/calibration_params_IMU_CHAMELEON.yaml"/>
+      <param name="required_points" value="4" />
+      <param name="estimator_status" value="true"/>
+      <param name="debugging" value="false"/>
+      <param name="local_frame_name" value="led_pattern_2"/>
+      <param name="global_frame_name" value="odom"/>
+      <param name="tf_publish_time" value="0.01"/>
+    </node>
+
+    <node name="transform_estimator" pkg="tethered_drone" type="attitude_estimator_node" output="screen">  </node>
+    
+  </group>
+
+  <node name="player" pkg="rosbag" type="play" output="screen" args=" --clock $(arg bag_file)">
+  </node>
+
+
+</launch>

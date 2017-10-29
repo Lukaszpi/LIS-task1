@@ -1,0 +1,16 @@
+<launch>
+  <arg name="mav_name" default="ibis" />
+  <arg name="pattern_name" default="led_marker" />
+  <arg name="namespace" default="ground_station" />
+
+  <node ns="$(arg namespace)" name="vrpn_client_mav" type="ros_vrpn_client" pkg="ros_vrpn_client" output="screen">
+    <param name="object_name" value="$(arg mav_name)" />
+    <rosparam file="$(find tethered_drone)/launch/vicon_settings.yaml"/>
+  </node>
+
+  <node ns="$(arg namespace)" name="vrpn_client_pattern" type="ros_vrpn_client" pkg="ros_vrpn_client" output="screen">
+    <param name="object_name" value="$(arg pattern_name)" />
+    <rosparam file="$(find tethered_drone)/launch/vicon_settings.yaml"/>
+  </node>
+
+</launch>
